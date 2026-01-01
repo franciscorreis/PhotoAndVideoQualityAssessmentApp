@@ -1,0 +1,32 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Results (opcional - descomente se não quiser versionar resultados)
+# */results_*.csv
+# */analysis_*.md
+# */analysis_*.pdf
+# */dados_*.pdf
+# */analise_*.md
+# */analise_*.pdf
+# */figures/
+
