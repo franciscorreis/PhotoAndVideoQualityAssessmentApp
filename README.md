@@ -114,20 +114,48 @@ To run the main application with full features:
 python video_quality_test.py
 ```
 
-**Workflow:**
-1. **Welcome Screen**: Enter a test name and select videos
+**Main Menu:**
+The application starts with a main menu offering two options:
+
+1. **Criar Teste** (Create Test) - Conduct a new subjective video quality test
+2. **Criar Resultado** (Create Result) - Calculate results and analysis from existing tests
+
+### Workflow: Creating a Test
+
+1. **Select "Criar Teste"** from the main menu
+2. **Test Setup Screen**:
+   - Enter a test name
    - Select one reference video
    - Select one or more distorted/test videos
-2. **Video Comparison**: For each test video:
+   - Click "Iniciar Teste" (Start Test)
+3. **Video Comparison**: For each test video:
    - Videos play side-by-side automatically
    - Rate the quality difference (0-10 scale)
    - Click "Next" to continue
-3. **Results**: After completing all videos:
-   - Results are saved automatically
-   - CSV file is generated
-   - Statistical analysis is performed
-   - AI analysis is generated (if Gemini key is configured)
-   - PDF reports are created
+4. **Save Results**: After completing all videos:
+   - Results are saved automatically as CSV in `tests/nomedoteste/results_TIMESTAMP.csv`
+   - Each test is saved in its own folder (no accumulation)
+   - Returns to main menu
+
+### Workflow: Creating Results
+
+1. **Select "Criar Resultado"** from the main menu
+2. **Result Setup Screen**:
+   - Enter a result name
+   - Add one or more CSV files from previous tests (from `tests/` folder)
+   - Select the reference video
+   - Select the distorted videos
+   - Click "Gerar Análise" (Generate Analysis)
+3. **Analysis Generation**:
+   - Combines multiple test CSVs
+   - Calculates MOS (Mean Opinion Score) as the average of all ratings for each video
+   - Generates comprehensive analysis with:
+     - Objective metrics (PSNR, SSIM)
+     - Statistical correlations
+     - Regression models
+     - Visualizations (graphs)
+     - AI-powered analysis (if Gemini key is configured)
+   - Saves all results in `results/nomeresultado/`
 
 ### Running the Simple Subjective Assessment
 
@@ -139,19 +167,43 @@ python app.py
 
 **Note:** This version uses VLC for playback and may have different features than `video_quality_test.py`.
 
-## Output Files
+## Project Structure
 
-After running a test, the following files are generated in a timestamped directory:
+The application organizes files in two main directories:
 
-- `results_YYYYMMDD_HHMMSS.csv` - Raw results data
-- `dados_YYYYMMDD_HHMMSS.pdf` - Data report with statistics
-- `analise_YYYYMMDD_HHMMSS.md` - AI-generated analysis (Markdown)
-- `analise_YYYYMMDD_HHMMSS.pdf` - AI-generated analysis (PDF)
-- `analysis_YYYYMMDD_HHMMSS_analysis.md` - Detailed analysis report
-- `figures/` - Directory containing visualization graphs:
-  - `psnr_vs_mos.png` - PSNR vs Mean Opinion Score
-  - `ssim_vs_mos.png` - SSIM vs Mean Opinion Score
-  - `mos_vs_psnr_comparison.png` - Comparison visualization
+### Tests Directory (`tests/`)
+
+Each test is saved in its own folder:
+```
+tests/
+└── nomedoteste/
+    └── results_YYYYMMDD_HHMMSS.csv
+```
+
+- **Location**: `tests/nomedoteste/results_TIMESTAMP.csv`
+- **Content**: Raw test data with individual ratings
+- **Format**: CSV with columns: `nome_do_teste`, `reference_filename`, `distorted_filename`, `trial_index`, `rating_0_10`, `timestamp`
+- **Note**: Each test is independent and saved in a separate folder
+
+### Results Directory (`results/`)
+
+Analysis results are saved in organized folders:
+```
+results/
+└── nomeresultado/
+    ├── dados_YYYYMMDD_HHMMSS.pdf          # Data report with statistics
+    ├── analise_YYYYMMDD_HHMMSS.md          # AI-generated analysis (Markdown)
+    ├── analise_YYYYMMDD_HHMMSS.pdf         # AI-generated analysis (PDF)
+    ├── analysis_YYYYMMDD_HHMMSS_analysis.md # Detailed analysis report
+    └── figures/                             # Visualization graphs
+        ├── psnr_vs_mos.png                 # PSNR vs Mean Opinion Score
+        ├── ssim_vs_mos.png                 # SSIM vs Mean Opinion Score
+        └── mos_vs_psnr_comparison.png      # Comparison visualization
+```
+
+- **Location**: `results/nomeresultado/`
+- **Content**: Combined analysis from multiple tests
+- **MOS Calculation**: Mean Opinion Score is calculated as the average of all ratings from selected tests for each video
 
 ## Configuration
 
@@ -209,7 +261,7 @@ Or run `python setup.py` again.
 - Check that video codecs are supported by OpenCV/VLC
 - Try converting videos to a standard format (H.264 MP4)
 
-## Project Structure
+## File Structure
 
 ```
 macos/
@@ -218,8 +270,29 @@ macos/
 ├── setup.py                  # Setup and dependency installation script
 ├── requirements.txt          # Python dependencies
 ├── .env                      # Environment variables (create this)
+├── tests/                    # Directory for individual test results
+│   └── nomedoteste/          # Each test in its own folder
+│       └── results_*.csv     # Test CSV files
+├── results/                   # Directory for analysis results
+│   └── nomeresultado/        # Each result analysis in its own folder
+│       ├── dados_*.pdf       # Data reports
+│       ├── analise_*.pdf     # AI analysis reports
+│       └── figures/          # Visualization graphs
 └── README.md                 # This file
 ```
+
+## Key Concepts
+
+### Mean Opinion Score (MOS)
+
+MOS is calculated as the average of all subjective ratings for each video across multiple tests:
+
+- **Single Test**: Each test collects individual ratings (0-10 scale)
+- **Multiple Tests**: When creating results, select multiple test CSVs
+- **MOS Calculation**: For each video, MOS = average of all ratings from all selected tests
+- **Example**: If 3 users rated a video as 7, 8, and 9, the MOS = (7+8+9)/3 = 8.0
+
+This ensures that MOS represents the collective opinion of multiple evaluators, which is essential for reliable subjective quality assessment.
 
 ## License
 
