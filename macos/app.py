@@ -404,7 +404,7 @@ class VideoRatingApp:
         # Resetar seleção de nota
         self.selected_rating = None
         self.update_rating_buttons()
-        
+    
         # Atualizar UI e iniciar reprodução após um pequeno delay
         # para garantir que o VLC está pronto
         self.root.update_idletasks()

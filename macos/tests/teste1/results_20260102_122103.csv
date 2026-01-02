@@ -1,0 +1,11 @@
+nome_do_teste,reference_filename,distorted_filename,trial_index,rating_0_10,timestamp
+teste1,ref.mp4,h265_b500k_LF.mp4,1,6,2026-01-02T12:20:22.151246
+teste1,ref.mp4,h265_b4000k_LF.mp4,2,8,2026-01-02T12:20:33.262759
+teste1,ref.mp4,h264_b8000k_LF.mp4,3,7,2026-01-02T12:20:49.308261
+teste1,ref.mp4,h264_b500k_LF.mp4,4,6,2026-01-02T12:20:54.625043
+teste1,ref.mp4,h265_b8000k_LF.mp4,5,5,2026-01-02T12:20:59.398509
+teste1,ref.mp4,h265_b1000k_LF.mp4,6,5,2026-01-02T12:21:00.268074
+teste1,ref.mp4,h264_b1000k_LF.mp4,7,5,2026-01-02T12:21:00.835121
+teste1,ref.mp4,h264_b2000k_LF.mp4,8,5,2026-01-02T12:21:01.294511
+teste1,ref.mp4,h264_b4000k_LF.mp4,9,5,2026-01-02T12:21:01.814903
+teste1,ref.mp4,h265_b2000k_LF.mp4,10,5,2026-01-02T12:21:03.608393

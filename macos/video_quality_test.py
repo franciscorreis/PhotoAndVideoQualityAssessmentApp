@@ -61,7 +61,62 @@ class VideoQualityTestApp:
         self.create_welcome_screen()
     
     def create_welcome_screen(self):
-        """Cria o ecrã inicial para configuração do teste"""
+        """Cria o ecrã inicial com duas opções principais"""
+        # Limpar widgets existentes
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        
+        # Frame principal
+        main_frame = ttk.Frame(self.root, padding="40")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Título
+        title_label = ttk.Label(main_frame, text="Teste Subjetivo de Qualidade de Vídeo", 
+                               font=("Arial", 20, "bold"))
+        title_label.pack(pady=40)
+        
+        # Frame para as duas opções principais
+        options_frame = ttk.Frame(main_frame)
+        options_frame.pack(expand=True, pady=50)
+        
+        # Opção 1: Criar Teste
+        test_frame = ttk.LabelFrame(options_frame, text="Criar Novo Teste", padding="30")
+        test_frame.pack(side=tk.LEFT, padx=30, fill=tk.BOTH, expand=True)
+        
+        ttk.Label(test_frame, 
+                 text="Realize um novo teste subjetivo de qualidade de vídeo.\n"
+                      "Selecione vídeos, avalie e guarde os resultados.",
+                 font=("Arial", 11),
+                 justify=tk.CENTER).pack(pady=20)
+        
+        ttk.Button(test_frame, text="Criar Teste", 
+                 command=self.create_test_setup_screen,
+                 width=20).pack(pady=20)
+        
+        # Opção 2: Criar Resultado
+        result_frame = ttk.LabelFrame(options_frame, text="Criar Resultado", padding="30")
+        result_frame.pack(side=tk.LEFT, padx=30, fill=tk.BOTH, expand=True)
+        
+        ttk.Label(result_frame, 
+                 text="Calcule resultados e análises a partir de testes existentes.\n"
+                      "Combine múltiplos testes para calcular MOS (média).",
+                 font=("Arial", 11),
+                 justify=tk.CENTER).pack(pady=20)
+        
+        ttk.Button(result_frame, text="Criar Resultado", 
+                 command=self.create_calculate_results_screen,
+                 width=20).pack(pady=20)
+    
+    def create_test_setup_screen(self):
+        """Cria o ecrã de configuração do teste"""
+        # Limpar estado anterior do teste
+        self.reference_video_path = None
+        self.distorted_videos = []
+        self.current_trial_index = 0
+        self.trial_order = []
+        self.results = []
+        self.nome_do_teste = None
+        
         # Limpar widgets existentes
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -71,7 +126,7 @@ class VideoQualityTestApp:
         main_frame.pack(fill=tk.BOTH, expand=True)
         
         # Título
-        title_label = ttk.Label(main_frame, text="Teste Subjetivo de Qualidade de Vídeo", 
+        title_label = ttk.Label(main_frame, text="Criar Novo Teste", 
                                font=("Arial", 18, "bold"))
         title_label.pack(pady=20)
         
@@ -82,6 +137,8 @@ class VideoQualityTestApp:
         ttk.Label(subject_frame, text="Nome do Teste:").pack(side=tk.LEFT, padx=5)
         self.nome_teste_entry = ttk.Entry(subject_frame, width=30)
         self.nome_teste_entry.pack(side=tk.LEFT, padx=5)
+        # Limpar campo de entrada
+        self.nome_teste_entry.delete(0, tk.END)
         
         # Botão para selecionar vídeo de referência
         ref_frame = ttk.Frame(main_frame)
@@ -107,10 +164,18 @@ class VideoQualityTestApp:
         ttk.Button(dist_frame, text="Selecionar Vídeos Distorcidos", 
                   command=self.select_distorted_videos).pack(pady=5)
         
+        # Botões de ação
+        action_frame = ttk.Frame(main_frame)
+        action_frame.pack(pady=30)
+        
         # Botão para iniciar teste
-        self.start_button = ttk.Button(main_frame, text="Iniciar Teste", 
+        self.start_button = ttk.Button(action_frame, text="Iniciar Teste", 
                                        command=self.start_test, state=tk.DISABLED)
-        self.start_button.pack(pady=30)
+        self.start_button.pack(side=tk.LEFT, padx=10)
+        
+        # Botão para voltar
+        ttk.Button(action_frame, text="Voltar", 
+                  command=self.create_welcome_screen).pack(side=tk.LEFT, padx=10)
     
     def select_reference_video(self):
         """Abre diálogo para selecionar vídeo de referência"""
@@ -499,22 +564,311 @@ class VideoQualityTestApp:
             self.save_results()
             self.show_completion_screen()
     
+    def create_calculate_results_screen(self):
+        """Cria a interface para calcular resultados a partir de CSVs"""
+        # Limpar widgets existentes
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        
+        # Frame principal
+        main_frame = ttk.Frame(self.root, padding="20")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Título
+        title_label = ttk.Label(main_frame, text="Calcular Resultados", 
+                               font=("Arial", 18, "bold"))
+        title_label.pack(pady=20)
+        
+        # Variáveis para armazenar seleções
+        self.calc_csv_paths = []  # Lista de CSVs
+        self.calc_ref_path = None
+        
+        # Nome do resultado
+        nome_frame = ttk.Frame(main_frame)
+        nome_frame.pack(pady=10)
+        
+        ttk.Label(nome_frame, text="Nome do Resultado:", font=("Arial", 12)).pack(side=tk.LEFT, padx=5)
+        self.calc_nome_resultado_entry = ttk.Entry(nome_frame, width=30)
+        self.calc_nome_resultado_entry.pack(side=tk.LEFT, padx=5)
+        self.calc_nome_resultado_entry.bind('<KeyRelease>', self.on_nome_resultado_change)
+        
+        # Frame para CSVs
+        csv_frame = ttk.LabelFrame(main_frame, text="Ficheiros CSV (pode adicionar vários para calcular médias)", padding="15")
+        csv_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+        
+        # Lista de CSVs com scrollbar
+        list_frame = ttk.Frame(csv_frame)
+        list_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+        
+        # Scrollbar
+        scrollbar_csv = ttk.Scrollbar(list_frame)
+        scrollbar_csv.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Listbox para mostrar CSVs
+        self.csv_listbox = tk.Listbox(list_frame, yscrollcommand=scrollbar_csv.set, height=6)
+        self.csv_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar_csv.config(command=self.csv_listbox.yview)
+        
+        # Botões para CSV
+        csv_buttons_frame = ttk.Frame(csv_frame)
+        csv_buttons_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Button(csv_buttons_frame, text="Adicionar CSV", 
+                  command=self.add_csv_file).pack(side=tk.LEFT, padx=5)
+        ttk.Button(csv_buttons_frame, text="Remover Selecionado", 
+                  command=self.remove_csv_file).pack(side=tk.LEFT, padx=5)
+        
+        # Frame para vídeo de referência
+        ref_frame = ttk.LabelFrame(main_frame, text="Vídeo de Referência", padding="15")
+        ref_frame.pack(fill=tk.X, padx=20, pady=10)
+        
+        self.calc_ref_path_label = ttk.Label(
+            ref_frame,
+            text="Nenhum vídeo selecionado",
+            foreground="gray"
+        )
+        self.calc_ref_path_label.pack(side=tk.LEFT, padx=10)
+        
+        ttk.Button(
+            ref_frame,
+            text="Selecionar Vídeo de Referência",
+            command=self.select_reference_for_calc
+        ).pack(side=tk.RIGHT)
+        
+        # Botões de ação
+        action_frame = ttk.Frame(main_frame)
+        action_frame.pack(pady=30)
+        
+        self.process_button = ttk.Button(
+            action_frame,
+            text="Gerar Análise",
+            command=self.process_calculation,
+            state=tk.DISABLED
+        )
+        self.process_button.pack(side=tk.LEFT, padx=10)
+        
+        ttk.Button(
+            action_frame,
+            text="Voltar ao Menu",
+            command=self.create_welcome_screen
+        ).pack(side=tk.LEFT, padx=10)
+    
+    def add_csv_file(self):
+        """Adiciona um CSV à lista"""
+        csv_paths = filedialog.askopenfilenames(
+            title="Selecionar Ficheiros CSV de Resultados",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+        )
+        
+        for csv_path in csv_paths:
+            if csv_path not in self.calc_csv_paths:
+                # Verificar se o CSV é válido
+                try:
+                    df = pd.read_csv(csv_path)
+                    if 'distorted_filename' not in df.columns or 'rating_0_10' not in df.columns:
+                        messagebox.showwarning("Aviso", 
+                                              f"CSV inválido: {os.path.basename(csv_path)}\n"
+                                              "Deve conter colunas 'distorted_filename' e 'rating_0_10'")
+                        continue
+                    self.calc_csv_paths.append(csv_path)
+                    self.csv_listbox.insert(tk.END, os.path.basename(csv_path))
+                except Exception as e:
+                    messagebox.showerror("Erro", f"Erro ao ler CSV:\n{str(e)}")
+        
+        self.check_calc_ready()
+    
+    def on_nome_resultado_change(self, *args):
+        """Callback quando o nome do resultado muda"""
+        self.check_calc_ready()
+    
+    def remove_csv_file(self):
+        """Remove CSV selecionado da lista"""
+        selection = self.csv_listbox.curselection()
+        if selection:
+            index = selection[0]
+            self.calc_csv_paths.pop(index)
+            self.csv_listbox.delete(index)
+            self.check_calc_ready()
+    
+    def select_reference_for_calc(self):
+        """Seleciona vídeo de referência para cálculo"""
+        ref_path = filedialog.askopenfilename(
+            title="Selecionar Vídeo de Referência",
+            filetypes=[("Vídeo files", "*.mp4 *.avi *.mov *.mkv *.flv *.wmv"), 
+                      ("All files", "*.*")]
+        )
+        
+        if ref_path:
+            self.calc_ref_path = ref_path
+            filename = os.path.basename(ref_path)
+            self.calc_ref_path_label.config(text=f"Referência: {filename}", foreground="black")
+            self.check_calc_ready()
+    
+    def check_calc_ready(self):
+        """Verifica se está tudo pronto para processar"""
+        nome_resultado = self.calc_nome_resultado_entry.get().strip()
+        if self.calc_csv_paths and self.calc_ref_path and nome_resultado:
+            self.process_button.config(state=tk.NORMAL)
+        else:
+            self.process_button.config(state=tk.DISABLED)
+    
+    def process_calculation(self):
+        """Processa o cálculo de resultados combinando múltiplos CSVs"""
+        nome_resultado = self.calc_nome_resultado_entry.get().strip()
+        if not nome_resultado:
+            messagebox.showerror("Erro", "Por favor, introduza o nome do resultado")
+            return
+        
+        if not self.calc_csv_paths or not self.calc_ref_path:
+            messagebox.showerror("Erro", "Por favor, adicione pelo menos um CSV e selecione o vídeo de referência")
+            return
+        
+        # Desabilitar botão durante processamento
+        self.process_button.config(state=tk.DISABLED, text="Processando...")
+        self.root.update()
+        
+        try:
+            # Combinar todos os CSVs
+            all_dfs = []
+            for csv_path in self.calc_csv_paths:
+                df = pd.read_csv(csv_path)
+                all_dfs.append(df)
+            
+            # Combinar DataFrames
+            combined_df = pd.concat(all_dfs, ignore_index=True)
+            
+            # Sempre calcular médias de MOS por vídeo distorcido (agrupar duplicados)
+            # Agrupar por vídeo distorcido e calcular média de ratings
+            mos_df = combined_df.groupby('distorted_filename')['rating_0_10'].agg(['mean', 'count']).reset_index()
+            mos_df.columns = ['distorted_filename', 'rating_0_10', 'num_ratings']
+            
+            # Criar novo DataFrame com médias
+            # Manter apenas uma linha por vídeo distorcido com a média
+            result_rows = []
+            for _, row in mos_df.iterrows():
+                # Pegar primeira ocorrência para outros campos
+                first_occurrence = combined_df[combined_df['distorted_filename'] == row['distorted_filename']].iloc[0]
+                result_rows.append({
+                    'nome_do_teste': first_occurrence.get('nome_do_teste', 'Análise Combinada' if len(self.calc_csv_paths) > 1 else 'Análise'),
+                    'reference_filename': first_occurrence.get('reference_filename', os.path.basename(self.calc_ref_path)),
+                    'distorted_filename': row['distorted_filename'],
+                    'trial_index': first_occurrence.get('trial_index', 0),
+                    'rating_0_10': row['rating_0_10'],  # Média
+                    'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                })
+            
+            # Criar CSV temporário combinado
+            timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+            temp_csv = os.path.join('.', f"combined_results_{timestamp_str}.csv")
+            combined_result_df = pd.DataFrame(result_rows)
+            combined_result_df.to_csv(temp_csv, index=False)
+            
+            csv_to_use = temp_csv
+            
+            # Obter nomes únicos dos vídeos distorcidos (já são únicos após agrupamento)
+            distorted_filenames = mos_df['distorted_filename'].tolist()
+            
+            # Pedir ao usuário para selecionar vídeos distorcidos
+            messagebox.showinfo("Selecionar Vídeos", 
+                               f"Por favor, selecione os vídeos distorcidos.\n\n"
+                               f"Vídeos esperados ({len(distorted_filenames)}):\n" + 
+                               "\n".join(distorted_filenames[:10]) + 
+                               ("\n..." if len(distorted_filenames) > 10 else ""))
+            
+            dist_paths = filedialog.askopenfilenames(
+                title="Selecionar Vídeos Distorcidos",
+                filetypes=[("Vídeo files", "*.mp4 *.avi *.mov *.mkv *.flv *.wmv"), 
+                          ("All files", "*.*")]
+            )
+            
+            if not dist_paths:
+                self.process_button.config(state=tk.NORMAL, text="Gerar Análise")
+                return
+            
+            # Criar pasta 'results' se não existir
+            results_base_dir = os.path.join('.', 'results')
+            os.makedirs(results_base_dir, exist_ok=True)
+            
+            # Criar pasta com o nome do resultado (sanitizar nome)
+            safe_nome_resultado = "".join(c for c in nome_resultado if c.isalnum() or c in (' ', '-', '_')).strip()
+            safe_nome_resultado = safe_nome_resultado.replace(' ', '_')
+            
+            # Criar diretório para o resultado dentro de results
+            results_dir = os.path.join(results_base_dir, safe_nome_resultado)
+            os.makedirs(results_dir, exist_ok=True)
+            
+            # Guardar temporariamente os dados necessários para generate_analysis
+            original_ref = self.reference_video_path
+            original_dist = self.distorted_videos
+            original_nome = self.nome_do_teste
+            
+            self.reference_video_path = self.calc_ref_path
+            self.distorted_videos = list(dist_paths)
+            self.nome_do_teste = nome_resultado
+            
+            # Obter timestamp
+            timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # Gerar análise usando o CSV combinado
+            pdf_file = self.generate_analysis(csv_to_use, timestamp_str, results_dir)
+            
+            # Limpar CSV temporário
+            if os.path.exists(temp_csv):
+                try:
+                    os.remove(temp_csv)
+                except:
+                    pass
+            
+            if pdf_file:
+                messagebox.showinfo("Sucesso", 
+                                   f"✓ Análise gerada com sucesso!\n\n"
+                                   f"✓ Ficheiros guardados em:\n{os.path.abspath(results_dir)}\n\n"
+                                   f"✓ {len(self.calc_csv_paths)} CSV(s) processado(s)\n"
+                                   f"✓ PDF de dados gerado\n"
+                                   f"✓ Análise com Gemini gerada (MD e PDF)")
+            else:
+                messagebox.showinfo("Sucesso", 
+                                   f"✓ Análise gerada!\n\n"
+                                   f"✓ Ficheiros guardados em:\n{os.path.abspath(results_dir)}\n\n"
+                                   f"✓ {len(self.calc_csv_paths)} CSV(s) processado(s)\n"
+                                   f"✓ Análise Markdown gerada\n"
+                                   f"⚠ PDF não foi gerado (verifique dependências)")
+            
+            # Restaurar valores originais
+            self.reference_video_path = original_ref
+            self.distorted_videos = original_dist
+            self.nome_do_teste = original_nome
+            
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            messagebox.showerror("Erro", 
+                                f"Erro ao gerar análise:\n{str(e)}\n\n"
+                                f"Verifique o console para mais detalhes.")
+            print(f"Erro completo:\n{error_details}")
+        finally:
+            self.process_button.config(state=tk.NORMAL, text="Gerar Análise")
+    
     def save_results(self):
-        """Guarda os resultados num ficheiro CSV e gera análise"""
+        """Guarda os resultados num ficheiro CSV na pasta tests"""
         if not self.results:
             return
+        
+        # Criar pasta 'tests' se não existir
+        tests_dir = os.path.join('.', 'tests')
+        os.makedirs(tests_dir, exist_ok=True)
         
         # Criar pasta com o nome do teste (sanitizar nome para evitar problemas com caminhos)
         safe_nome_teste = "".join(c for c in self.nome_do_teste if c.isalnum() or c in (' ', '-', '_')).strip()
         safe_nome_teste = safe_nome_teste.replace(' ', '_')
         
-        # Criar diretório para os resultados
-        results_dir = os.path.join('.', safe_nome_teste)
-        os.makedirs(results_dir, exist_ok=True)
+        # Criar diretório para o teste dentro de tests
+        test_dir = os.path.join(tests_dir, safe_nome_teste)
+        os.makedirs(test_dir, exist_ok=True)
         
         # Nome do ficheiro com timestamp
         timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        csv_filename = os.path.join(results_dir, f"results_{timestamp_str}.csv")
+        csv_filename = os.path.join(test_dir, f"results_{timestamp_str}.csv")
         
         # Escrever CSV
         with open(csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
@@ -526,29 +880,11 @@ class VideoQualityTestApp:
             for result in self.results:
                 writer.writerow(result)
         
-        # Gerar análise automática (tudo dentro da pasta do teste)
-        try:
-            pdf_file = self.generate_analysis(csv_filename, timestamp_str, results_dir)
-            if pdf_file:
-                messagebox.showinfo("Sucesso", 
-                                   f"✓ Todos os ficheiros guardados em:\n{os.path.abspath(results_dir)}\n\n"
-                                   f"✓ CSV: {os.path.basename(csv_filename)}\n"
-                                   f"✓ PDF de dados gerado\n"
-                                   f"✓ Análise com Gemini gerada (MD e PDF)")
-            else:
-                messagebox.showinfo("Sucesso", 
-                                   f"✓ Todos os ficheiros guardados em:\n{os.path.abspath(results_dir)}\n\n"
-                                   f"✓ CSV: {os.path.basename(csv_filename)}\n"
-                                   f"✓ Análise Markdown gerada\n"
-                                   f"⚠ PDF não foi gerado (verifique dependências)")
-        except Exception as e:
-            import traceback
-            error_details = traceback.format_exc()
-            messagebox.showwarning("Aviso", 
-                                  f"Resultados guardados em:\n{os.path.abspath(results_dir)}\n\n"
-                                  f"Erro ao gerar análise:\n{str(e)}\n\n"
-                                  f"Verifique o console para mais detalhes.")
-            print(f"Erro completo:\n{error_details}")
+        # Apenas mostrar mensagem de sucesso com o CSV
+        messagebox.showinfo("Sucesso", 
+                           f"✓ Teste concluído!\n\n"
+                           f"✓ CSV guardado em:\n{os.path.abspath(csv_filename)}\n\n"
+                           f"Use 'Calcular Resultados' no menu inicial para gerar análises.")
     
     def calculate_psnr(self, ref_path, dist_path):
         """Calcula PSNR médio entre dois vídeos"""
@@ -655,7 +991,8 @@ class VideoQualityTestApp:
             # Encontrar caminho completo do vídeo distorcido
             dist_path = None
             for video_path in self.distorted_videos:
-                if os.path.basename(video_path) == dist_filename:
+                # Comparar tanto pelo nome do ficheiro quanto pelo caminho completo
+                if os.path.basename(video_path) == dist_filename or video_path == dist_filename:
                     dist_path = video_path
                     break
             
@@ -668,6 +1005,8 @@ class VideoQualityTestApp:
                 ssim_values.append(ssim_val)
                 mos_values.append(row['rating_0_10'])
                 distorted_files.append(dist_filename)
+            else:
+                print(f"⚠ Aviso: Vídeo distorcido não encontrado: {dist_filename}")
         
         # Criar DataFrame com métricas
         metrics_df = pd.DataFrame({
@@ -1129,8 +1468,8 @@ Formata a resposta em Markdown com títulos, parágrafos e listas quando apropri
                       f"Resultados guardados em CSV.",
                  font=("Arial", 12)).pack(pady=20)
         
-        # Botão para novo teste
-        ttk.Button(main_frame, text="Novo Teste", 
+        # Botão para voltar ao menu
+        ttk.Button(main_frame, text="Voltar ao Menu", 
                   command=self.create_welcome_screen).pack(pady=20)
         
         # Botão para sair
