@@ -1,0 +1,11 @@
+nome_do_teste,reference_filename,distorted_filename,trial_index,rating_0_10,timestamp
+teste1,reference_lossless.mp4,H265_2000kbps.mp4,1,8,2026-01-03T14:39:48.004913
+teste1,reference_lossless.mp4,H265_4000kbps.mp4,2,7,2026-01-03T14:40:01.662786
+teste1,reference_lossless.mp4,H265_1000kbps.mp4,3,10,2026-01-03T14:40:15.958460
+teste1,reference_lossless.mp4,H264_2000kbps.mp4,4,7,2026-01-03T14:40:38.291493
+teste1,reference_lossless.mp4,H264_500kbps.mp4,5,1,2026-01-03T14:40:48.682790
+teste1,reference_lossless.mp4,H265_8000kbps.mp4,6,8,2026-01-03T14:40:59.670107
+teste1,reference_lossless.mp4,H265_500kbps.mp4,7,3,2026-01-03T14:41:11.836619
+teste1,reference_lossless.mp4,H264_1000kbps.mp4,8,1,2026-01-03T14:41:23.236238
+teste1,reference_lossless.mp4,H264_8000kbps.mp4,9,8,2026-01-03T14:41:34.052860
+teste1,reference_lossless.mp4,H264_4000kbps.mp4,10,7,2026-01-03T14:41:49.781614
